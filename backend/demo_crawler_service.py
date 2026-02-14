@@ -22,7 +22,7 @@ async def run_demo() -> None:
     # 3.2: 按关键字抓取（基于 tweet_advanced_search）
     keyword_result = await crawler.crawl_by_keyword(
         keyword="AI",
-        query_type="Latest",
+        query_type="Top",
     )
     print(f"[3.2] 关键字模式抓取条数: {len(keyword_result.items)}")
 

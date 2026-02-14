@@ -7,7 +7,7 @@ from db.session import engine
 # 在 Python 中，类必须被“解释器执行到”才能被注册到 Base.metadata 中
 # 如果不在这里导入 models，Base.metadata.create_all 就会因为找不到表定义而什么都不做
 # # noqa: F401 是告诉代码检查工具（Linter）忽略“导入了但没使用”的警告
-from models import MonitorSource, PushChannel, PushLog  # noqa: F401
+from models import ContentAIAnalysis, ContentItem, LLMCallLog, MonitorSource, PushChannel, PushLog, PushLogItem  # noqa: F401
 
 
 async def init_db() -> None:

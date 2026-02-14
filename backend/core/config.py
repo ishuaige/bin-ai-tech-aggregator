@@ -23,6 +23,16 @@ class Settings(BaseSettings):
     # Demo 默认测试账号（来自官方文档示例）
     TWITTERAPI_IO_DEMO_USERNAME: str = "KaitoEasyAPI"
 
+    # 关键字模式：仅保留最近 N 小时内的数据（默认 24 小时 = 1 天）
+    KEYWORD_LOOKBACK_HOURS: int = 24
+
+    # 关键字模式：最低点赞阈值（用于过滤低质量噪音）
+    # 经验默认值：30（太低会噪声多，太高会漏掉早期优质内容）
+    KEYWORD_MIN_LIKES: int = 30
+
+    # 作者模式：每次只取最新 N 条，避免一次拉取过多导致噪音/成本上升
+    AUTHOR_FETCH_LIMIT: int = 10
+
     # 智谱 GLM Key（禁止硬编码，必须从 .env 读取）
     ZAI_API_KEY: str | None = None
 
@@ -34,6 +44,12 @@ class Settings(BaseSettings):
 
     # 超时/瞬时错误时的最大重试次数
     GLM_MAX_RETRIES: int = 2
+
+    # 单次调用大模型时，最多打包多少条资讯做批量分析
+    LLM_ANALYZE_BATCH_SIZE: int = 8
+
+    # 应用统一时区（用于时间展示与应用侧写库时间）
+    APP_TIMEZONE: str = "Asia/Shanghai"
 
     # 选填项：有默认值
     APP_NAME: str = "AI Tech Aggregator Backend"

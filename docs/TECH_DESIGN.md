@@ -1,90 +1,109 @@
-# 🛠️ 技术设计与实现方案：AI 资讯监控与推送系统 (v1.0)
+# 🛠️ 技术设计与实现方案：AI 资讯监控与推送系统 (v1.1)
 
 ## 1. 架构概览 (Architecture Overview)
-本项目采用前后端分离的现代化 Web 架构。核心业务流为一个典型的 ETL（提取-转换-加载）数据管道：后台通过异步任务拉取推特/RSS 数据，交由 LLM 进行清洗和总结，存入本地数据库，并通过 Webhook 实时分发。前端提供可视化的管理看板。
-
-
+本项目采用前后端分离架构。后端核心是异步 ETL 管道：
+1. 按监控源抓取资讯（当前已接入 TwitterAPI.io）。
+2. 进行去重、清洗与热度评分。
+3. 将原始资讯落库到通用内容主表。
+4. 调用 GLM 对缺失项做批量分析并缓存。
+5. 生成摘要并推送到 Webhook 渠道。
+6. 记录推送执行日志与 LLM 调用日志。
 
 ## 2. 核心技术栈选型 (Technology Stack)
 
-### 2.1 后端引擎 
-* **运行环境与依赖管理**：Python 3.10+ / `uv`
-* **Web 框架**：`FastAPI` (全异步支持，内置 Swagger API 文档)
-* **数据校验**：`Pydantic v2` (基于类型提示的严格请求/响应校验)
-* **ORM 与数据库**：`SQLAlchemy 2.0` (AsyncSession 异步模式) + `SQLite`
-* **网络请求**：`httpx` (支持 `async/await` 的高性能 HTTP 客户端)
-* **任务调度**：`APScheduler` (后台定时任务引擎)
-* **AI 交互**：`openai` (官方 Python SDK)
+### 2.1 后端引擎
+- 运行环境与依赖管理：Python 3.10+ / `uv`
+- Web 框架：`FastAPI`
+- 数据校验：`Pydantic v2`
+- 配置管理：`pydantic-settings`
+- ORM 与数据库：`SQLAlchemy 2.0` (AsyncSession) + `SQLite`
+- 网络请求：`httpx`
+- 任务调度：`APScheduler`
+- AI 交互：智谱 GLM（`zai-sdk`）
 
-### 2.2 前端看板 
-* **核心框架**：Node.js 22 / `Vue 3` (Composition API)
-* **构建工具**：`Vite`
-* **UI 组件库**：`Element Plus`
-* **网络与路由**：`Axios` + `Vue Router 4`
+### 2.2 前端看板
+- 核心框架：Node.js 22 / `Vue 3`
+- 构建工具：`Vite`
+- UI 组件库：`Element Plus`
+- 网络与路由：`Axios` + `Vue Router 4`
 
 ---
 
-## 3. 数据库 ER 模型设计 (Database Schema)
-
-系统底层由三张核心数据表支撑，采用下划线命名规范。
-
-
+## 3. 数据库模型设计 (Database Schema)
 
 ### 3.1 监控源配置表 (`monitor_sources`)
-用于持久化设定的抓取目标。
-| 字段名 | 类型 | 约束 | 描述 |
-| :--- | :--- | :--- | :--- |
-| `id` | Integer | Primary Key, Auto Increment | 主键 |
-| `type` | String(20) | Not Null | 枚举：`'author'`(博主) 或 `'keyword'`(关键字) |
-| `value` | String(100) | Not Null | 目标值 (如 `karpathy`) |
-| `is_active`| Boolean | Default `True` | 是否启用该抓取源 |
-| `remark` | String(255)| Nullable | 备注说明 |
+- 作用：管理抓取目标（博主/关键字）。
+- 关键字段：`id`, `type`, `value`, `is_active`, `remark`。
 
 ### 3.2 推送渠道配置表 (`push_channels`)
-用于持久化 Webhook 机器人信息。
-| 字段名 | 类型 | 约束 | 描述 |
-| :--- | :--- | :--- | :--- |
-| `id` | Integer | Primary Key, Auto Increment | 主键 |
-| `platform` | String(20) | Not Null | 平台枚举 (如 `'wechat'`) |
-| `webhook_url`| String(255)| Not Null | 机器人完整调用地址 |
-| `name` | String(50) | Not Null | 渠道命名 (如 `前端技术早报`) |
-| `is_active`| Boolean | Default `True` | 是否启用该推送渠道 |
+- 作用：管理企业微信/飞书/钉钉 Webhook。
+- 关键字段：`id`, `platform`, `webhook_url`, `name`, `is_active`。
 
-### 3.3 推送历史日志表 (`push_logs`)
-用于沉淀处理后的数据，支持前端大盘展示与追溯。
-| 字段名 | 类型 | 约束 | 描述 |
-| :--- | :--- | :--- | :--- |
-| `id` | Integer | Primary Key, Auto Increment | 主键 |
-| `source_id`| Integer | Foreign Key (`monitor_sources.id`) | 关联的源 ID |
-| `raw_content`| Text | Nullable | 抓取到的原始文本 |
-| `ai_summary` | Text | Nullable | AI 生成的 Markdown 摘要 |
-| `status` | String(20) | Not Null | 执行状态 (`'success'`, `'failed'`) |
-| `created_at` | DateTime | Default `now()` | 记录创建时间 |
+### 3.3 通用资讯主表 (`content_items`)
+- 作用：沉淀抓取到的原始资讯主数据，支持未来多平台扩展。
+- 关键字段：
+  - `platform`：平台标识（当前 `twitter`）
+  - `source_type`：来源类型（如 `author_timeline` / `tweet_advanced_search`）
+  - `external_id`：第三方内容 ID
+  - `author_name`, `url`, `title`, `content_text`
+  - `content_hash`：正文哈希（用于判断 AI 缓存是否失效）
+  - `published_at`, `raw_payload`, `hotness`
 
----
+### 3.4 资讯 AI 分析表 (`content_ai_analyses`)
+- 作用：每条资讯对应一条最新 AI 分析结果。
+- 关键字段：
+  - `content_item_id`（唯一）
+  - `ai_score`, `summary`, `model`
+  - `content_hash`（与 `content_items` 对齐）
+  - `prompt_text`, `response_text`, `status`, `failure_reason`
 
-## 4. 系统目录分层与核心模块 (Directory Structure & Core Modules)
+### 3.5 推送历史日志表 (`push_logs`)
+- 作用：记录每次执行结果（成功/失败、摘要、时间）。
 
-为保证代码的高可维护性和扩展性，后端代码严格遵循以下分层架构：
+### 3.6 推送明细表 (`push_log_items`)
+- 作用：记录每次推送批次中的资讯明细（便于前端历史展示）。
 
-* **`models/` (数据持久层)**：使用 SQLAlchemy 定义数据库表结构模型。
-* **`schemas/` (数据交互层)**：使用 Pydantic 定义 API 的请求体 (Request) 和响应体 (Response)，进行严格的数据校验。
-* **`services/` (业务逻辑层)**：
-    * `crawler_service.py`: 负责异步拉取推特/RSS等外部数据源。
-    * `llm_service.py`: 负责构建 Prompt 并调用大模型 API 生成结构化摘要。
-    * `notify_service.py`: 负责组装 Markdown 消息体并推送到指定的 Webhook 渠道。
-* **`routers/` (API 路由层)**：使用 FastAPI 暴露 RESTful 接口，按业务模块划分路由。
+### 3.7 大模型调用日志表 (`llm_call_logs`)
+- 作用：记录每次 LLM 调用请求与响应，支持提示词优化分析。
 
 ---
 
-## 5. 项目交付阶段规划 (Project Milestones)
+## 4. 核心业务规则
 
-* **Phase 1: 核心引擎与底层基础 (Core Engine & Infrastructure)**
-  * 完成项目运行环境的初始化与依赖锁定。
-  * 实现基础的异步数据抓取、大模型 API 接入与 Webhook 消息推送核心链路。
-* **Phase 2: 服务化与数据持久化 (API & Data Persistence)**
-  * 完成 SQLite 数据库及数据表的设计与自动构建。
-  * 封装标准的 RESTful API，实现监控配置与推送渠道的动态 CRUD。
-* **Phase 3: 前端看板与自动化调度 (Dashboard & Automation)**
-  * 搭建 Vue 3 前端管理后台，对接后端 API 实现数据可视化与交互。
-  * 引入后台定时任务调度器 (Scheduler)，实现每日自动化信息聚合与推送闭环。
+### 4.1 抓取策略
+- `author` 模式：抓取用户最近内容，默认仅取最新 `10` 条（`AUTHOR_FETCH_LIMIT`）。
+- `keyword` 模式：使用 `tweet_advanced_search` + `queryType=Top`。
+- 关键字查询会附加点赞阈值：`min_faves:{KEYWORD_MIN_LIKES}`，并在本地再次做 likeCount 阈值过滤。
+
+### 4.2 AI 分析策略
+- 先查 `content_ai_analyses` 缓存（通过 `content_hash` 判断是否可复用）。
+- 仅对缺失或内容变更项调用 GLM。
+- 采用批量分析，按 `LLM_ANALYZE_BATCH_SIZE` 分批调用，降低请求次数与耗时。
+
+### 4.3 推送策略
+- 飞书：仅发送热度前 10 条资讯。
+- 其他渠道：按传入列表发送。
+- 推送消息包含标题、来源、AI 评分、标签、发布时间、AI 提炼。
+
+---
+
+## 5. 系统目录分层与核心模块 (Directory Structure & Core Modules)
+- `models/`：SQLAlchemy 模型定义。
+- `schemas/`：Pydantic 请求/响应与内部 DTO。
+- `services/`：核心业务逻辑。
+  - `crawler_service.py`：抓取外部资讯。
+  - `content_filter_service.py`：去重与清洗。
+  - `scoring_service.py`：热度评分。
+  - `llm_service.py`：GLM 调用、格式解析、批量分析。
+  - `pipeline_service.py`：抓取到推送的编排。
+  - `notify_service.py`：Webhook 消息组装与发送。
+  - `scheduler_service.py`：定时调度。
+- `db/`：数据库引擎、会话与建表初始化。
+- `main.py`：应用生命周期、健康检查、内部调试入口。
+
+---
+
+## 6. 项目阶段状态（当前）
+- Phase 2：已完成（数据库与配置管理）。
+- Phase 3：核心链路已完成并持续优化（批量 AI、缓存复用、多渠道推送）。
+- Phase 4/5：待继续推进 API 完整化与前端页面联调。

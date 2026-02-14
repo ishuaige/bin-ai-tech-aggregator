@@ -60,6 +60,8 @@ async def run_demo() -> None:
     result = await llm_service.summarize(cleaned_items)
     print(f"[3.6/3.7] 状态: {result.status}")
     print(f"[3.6/3.7] failure_reason: {result.failure_reason}")
+    print(f"[3.6/3.7] 综合评分: {result.overall_score}")
+    print(f"[3.6/3.7] 洞察条数: {len(result.insights)}")
     print(f"[3.6/3.7] 摘要预览: {result.summary_markdown[:300]}")
 
 

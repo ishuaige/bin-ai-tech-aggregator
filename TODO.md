@@ -13,7 +13,7 @@
   验收标准：提供 `get_db` 异步依赖；启动时能成功建立引擎；无同步阻塞 DB 调用。
 
 - [x] 2.3 实现数据库初始化脚本（自动创建表）
-  验收标准：执行初始化命令后成功生成 SQLite 文件，三张核心表存在。
+  验收标准：执行初始化命令后成功生成 SQLite 文件，核心业务表（`monitor_sources`、`push_channels`、`content_items`、`content_ai_analyses`、`push_logs`）存在。
 
 - [x] 2.4 定义 `monitor_sources` SQLAlchemy 模型
   验收标准：字段与设计文档一致（`id/type/value/is_active/remark`），约束生效。
@@ -45,10 +45,10 @@
 ## Phase 3: 核心业务逻辑
 
 - [x] 3.1 编写 `crawler_service`：基于 TwitterAPI.io 按博主抓取内容（author 模式）
-  验收标准：调用 `get_user_last_tweets` 成功返回推文列表，并映射为统一 DTO（含 `tweet_id`、`url`、`text`、`published_at`）。
+  验收标准：调用 `get_user_last_tweets` 成功返回推文列表，并映射为统一 DTO（含 `tweet_id`、`url`、`text`、`published_at`）；默认仅保留最新 10 条（可配置）。
 
 - [x] 3.2 编写 `crawler_service`：基于 TwitterAPI.io 按关键字抓取内容（keyword 模式）
-  验收标准：调用 `tweet_advanced_search`（`query` + `queryType`）返回推文列表，并映射为统一 DTO；空结果与异常场景有明确返回。
+  验收标准：调用 `tweet_advanced_search`（`query` + `queryType=Top`）返回推文列表，并映射为统一 DTO；查询语句支持 `min_faves` 阈值过滤；空结果与异常场景有明确返回。
 
 - [x] 3.3 统一抓取结果 DTO（内部数据结构）
   验收标准：author/keyword 两种抓取均返回 `CrawlBatchResult(items: list[CrawlItem])`，后续服务无需分支适配。
@@ -65,29 +65,35 @@
 - [x] 3.7 解析并校验 LLM 返回内容格式
   验收标准：结果为空、格式异常时可降级处理并记录失败原因。
 
-- [ ] 3.8 编写 `notify_service`：Webhook 消息组装（Markdown）
+- [x] 3.8 编写 `notify_service`：Webhook 消息组装（Markdown）
   验收标准：消息包含来源、摘要、时间等关键字段；可读性符合企业群通知场景。
 
-- [ ] 3.9 编写 `notify_service`：异步发送与错误处理
+- [x] 3.9 编写 `notify_service`：异步发送与错误处理
   验收标准：Webhook 200 视为成功；非 200 与网络失败记录错误并不中断其他渠道发送。
 
-- [ ] 3.10 实现单源执行编排（抓取 -> 总结 -> 推送 -> 记日志）
+- [x] 3.10 实现单源执行编排（抓取 -> 总结 -> 推送 -> 记日志）
   验收标准：执行一次后 `push_logs` 新增记录，状态与结果一致。
 
-- [ ] 3.11 实现全局批处理编排（遍历启用 source）
+- [x] 3.11 实现全局批处理编排（遍历启用 source）
   验收标准：仅处理 `is_active=true` 的监控源；批次完成后输出汇总统计（成功/失败数）。
 
-- [ ] 3.12 集成 APScheduler 定时任务（默认每日 08:30）
+- [x] 3.12 集成 APScheduler 定时任务（默认每日 08:30）
   验收标准：应用启动后注册任务成功；到时触发一次完整批处理链路。
 
-- [ ] 3.13 实现“手动立即执行”服务入口
+- [x] 3.13 实现“手动立即执行”服务入口
   验收标准：调用后即时触发批处理，不影响定时任务的下次执行。
 
-- [ ] 3.14 增加日志与可观测性（结构化日志 + request id）
+- [x] 3.14 增加日志与可观测性（结构化日志 + request id）
   验收标准：抓取、LLM、推送、DB 写入关键步骤均可在日志中追踪。
 
-- [ ] 3.15 补齐核心服务单元测试（crawler/llm/notify/orchestrator）
+- [x] 3.15 补齐核心服务单元测试（crawler/llm/notify/orchestrator）
   验收标准：关键路径和失败路径均有测试；测试通过率 100%。
+
+- [x] 3.16 建立通用资讯数据模型（`content_items` + `content_ai_analyses`）
+  验收标准：抓取结果先落 `content_items`，AI 分析结果落 `content_ai_analyses`，推送日志仅作为历史记录。
+
+- [x] 3.17 优化 AI 调用为批量分析
+  验收标准：缺失缓存资讯按批次调用 GLM（非逐条请求），批大小可配置，调用耗时与次数明显下降。
 
 ## Phase 4: API 接口
 

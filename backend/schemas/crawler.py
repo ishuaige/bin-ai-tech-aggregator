@@ -12,6 +12,7 @@ class CrawlItem(BaseModel):
     url: str = Field(description="推文链接")
     text: str = Field(description="推文正文")
     published_at: datetime | None = Field(default=None, description="推文发布时间")
+    hotness: int | None = Field(default=None, description="热度分（0-100，规则计算）")
     raw_payload: dict = Field(default_factory=dict, description="原始推文数据，便于调试和追溯")
 
 
