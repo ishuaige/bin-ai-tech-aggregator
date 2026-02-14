@@ -14,6 +14,27 @@ class Settings(BaseSettings):
     # 数据库连接串
     DB_URL: str
 
+    # TwitterAPI.io 平台的 API Key（禁止硬编码，必须从 .env 读取）
+    TWITTERAPI_IO_API_KEY: str | None = None
+
+    # TwitterAPI.io 的基础地址，默认使用官方地址
+    TWITTERAPI_IO_BASE_URL: str = "https://api.twitterapi.io"
+
+    # Demo 默认测试账号（来自官方文档示例）
+    TWITTERAPI_IO_DEMO_USERNAME: str = "KaitoEasyAPI"
+
+    # 智谱 GLM Key（禁止硬编码，必须从 .env 读取）
+    ZAI_API_KEY: str | None = None
+
+    # 默认模型名，可按需切换
+    GLM_MODEL: str = "glm-4.5-air"
+
+    # 大模型请求超时时间（秒）
+    GLM_TIMEOUT_SECONDS: float = 30.0
+
+    # 超时/瞬时错误时的最大重试次数
+    GLM_MAX_RETRIES: int = 2
+
     # 选填项：有默认值
     APP_NAME: str = "AI Tech Aggregator Backend"
     APP_ENV: str = "development"
