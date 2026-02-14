@@ -1,0 +1,17 @@
+[project]
+name = "bin-ai-tech-aggregator-backend"
+version = "0.1.0"
+description = "Backend for AI tech aggregator"
+requires-python = ">=3.10"
+dependencies = [
+    "aiosqlite>=0.20",
+    "fastapi>=0.110",
+    "greenlet>=3.0",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.2",
+    "sqlalchemy>=2.0",
+    "uvicorn[standard]>=0.27",
+]
+
+[dependency-groups]
+dev = []
