@@ -11,7 +11,7 @@
   <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0.110%2B-009688?logo=fastapi&logoColor=white">
   <img alt="Vue" src="https://img.shields.io/badge/Vue-3.5%2B-42b883?logo=vuedotjs&logoColor=white">
   <img alt="Vite" src="https://img.shields.io/badge/Vite-6.x-646CFF?logo=vite&logoColor=white">
-  <img alt="License" src="https://img.shields.io/badge/License-TBD-lightgrey">
+  <img alt="License" src="https://img.shields.io/badge/License-MIT-yellow.svg">
 </p>
 
 ## 项目简介
@@ -238,4 +238,4 @@ bin-ai-tech-aggregator/
 
 ## 许可证
 
-当前仓库尚未声明正式开源许可证，请在发布前补充 `LICENSE` 文件（如 MIT / Apache-2.0）。
+本项目基于 [MIT License](./LICENSE) 开源。
