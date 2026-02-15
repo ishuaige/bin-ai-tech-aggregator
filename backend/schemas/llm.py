@@ -9,6 +9,7 @@ class LLMInsightItem(BaseModel):
     tweet_id: str = ""
     ai_score: int = 0
     summary: str = ""
+    ai_title: str | None = None
 
 
 class LLMSummaryResult(BaseModel):

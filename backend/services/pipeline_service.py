@@ -5,7 +5,7 @@ import json
 import logging
 from dataclasses import dataclass
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core import app_now, get_settings, to_app_tz
@@ -19,6 +19,7 @@ from models import (
     PushLog,
     PushLogItem,
     PushStatus,
+    SourceChannelBinding,
 )
 from schemas import CrawlItem, LLMInsightItem
 from services.content_filter_service import ContentFilterService
@@ -90,7 +91,7 @@ class PipelineService:
             summary_markdown = self._build_summary_markdown(items=enriched_items, ai_insight_map=ai_insight_map)
             digest_items = self._build_digest_items(source=source, items=enriched_items, ai_insight_map=ai_insight_map)
 
-            channels = await self._load_active_channels(session=session)
+            channels = await self._load_active_channels(session=session, source_id=source.id)
             notify_results = await self._notify.notify_channels(
                 channels=channels,
                 source_name=source.value,
@@ -204,10 +205,32 @@ class PipelineService:
         return list(result.scalars().all())
 
     @staticmethod
-    async def _load_active_channels(session: AsyncSession) -> list[PushChannel]:
+    async def _load_active_channels(session: AsyncSession, source_id: int) -> list[PushChannel]:
+        bound_total = int(
+            (
+                await session.execute(
+                    select(func.count(SourceChannelBinding.id)).where(SourceChannelBinding.source_id == source_id)
+                )
+            ).scalar_one()
+        )
+        if bound_total > 0:
+            stmt = (
+                select(PushChannel)
+                .join(
+                    SourceChannelBinding,
+                    SourceChannelBinding.channel_id == PushChannel.id,
+                )
+                .where(
+                    SourceChannelBinding.source_id == source_id,
+                    PushChannel.is_active.is_(True),
+                )
+            )
+            rows = await session.execute(stmt)
+            return list(rows.scalars().all())
+
         stmt = select(PushChannel).where(PushChannel.is_active.is_(True))
-        result = await session.execute(stmt)
-        return list(result.scalars().all())
+        rows = await session.execute(stmt)
+        return list(rows.scalars().all())
 
     @staticmethod
     async def _save_log(
@@ -280,11 +303,14 @@ class PipelineService:
             current_hash = self._compute_source_text_hash(item.text)
             cached = cached_map.get(content_item.id)
             if cached is not None and cached.content_hash == current_hash and cached.status == "success":
-                result[item.tweet_id] = LLMInsightItem(
+                cached_insight = LLMInsightItem(
                     tweet_id=item.tweet_id,
                     ai_score=cached.ai_score,
                     summary=cached.summary,
+                    ai_title=None,
                 )
+                result[item.tweet_id] = cached_insight
+                self._apply_ai_generated_title_if_missing(content_item=content_item, insight=cached_insight)
                 continue
             pending.append((item, content_item, cached, current_hash))
 
@@ -310,6 +336,7 @@ class PipelineService:
             for item, content_item, cached, current_hash in chunk:
                 insight = insight_map.get(item.tweet_id)
                 if insight is not None:
+                    self._apply_ai_generated_title_if_missing(content_item=content_item, insight=insight)
                     await self._upsert_ai_analysis(
                         session=session,
                         cached=cached,
@@ -329,6 +356,7 @@ class PipelineService:
                     tweet_id=item.tweet_id,
                     ai_score=self._estimate_ai_score_10(item=item) * 10,
                     summary=self._fallback_summary(item=item),
+                    ai_title=None,
                 )
                 await self._upsert_ai_analysis(
                     session=session,
@@ -569,3 +597,33 @@ class PipelineService:
     def _compute_source_text_hash(text: str) -> str:
         normalized = " ".join((text or "").split()).strip()
         return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def _apply_ai_generated_title_if_missing(content_item: ContentItem, insight: LLMInsightItem) -> None:
+        if content_item.title and content_item.title.strip():
+            return
+
+        candidate = (insight.ai_title or "").strip()
+        if not candidate:
+            candidate = PipelineService._build_title_from_summary(insight.summary)
+        if not candidate:
+            return
+
+        if candidate.startswith("[AI生成]"):
+            content_item.title = candidate[:512]
+            return
+        content_item.title = f"[AI生成] {candidate}"[:512]
+
+    @staticmethod
+    def _build_title_from_summary(summary: str) -> str:
+        text = " ".join((summary or "").replace("\n", " ").split()).strip()
+        if not text:
+            return ""
+        # 优先取句号前的首句，避免过长描述直接作为标题。
+        for sep in ("。", "！", "？", ".", "!", "?"):
+            if sep in text:
+                text = text.split(sep, 1)[0].strip()
+                break
+        if len(text) > 28:
+            text = f"{text[:28]}..."
+        return text

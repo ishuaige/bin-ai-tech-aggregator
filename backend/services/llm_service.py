@@ -164,7 +164,7 @@ class LLMService:
     async def analyze_items(self, items: Sequence[CrawlItem]) -> LLMBatchItemAnalysisResult:
         """
         批量分析多条资讯，减少 API 往返次数。
-        输出要求：JSON 数组，每个元素包含 tweet_id/ai_score/summary。
+        输出要求：JSON 数组，每个元素包含 tweet_id/ai_score/summary/ai_title。
         """
         if not items:
             return LLMBatchItemAnalysisResult(
@@ -247,11 +247,12 @@ class LLMService:
             )
         content = (
             "请分析下面多条资讯，输出严格 JSON 数组，不要加 markdown 代码块，不要加解释。\n"
-            "JSON 每个元素必须包含字段：tweet_id, ai_score, summary。\n"
+            "JSON 每个元素必须包含字段：tweet_id, ai_score, summary, ai_title。\n"
             "要求：\n"
             "1) tweet_id 必须来自输入。\n"
             "2) ai_score 为 0-100 整数。\n"
             "3) summary 为 20-60 字中文，可执行、避免空话。\n\n"
+            "4) ai_title 为 8-24 字中文标题，简洁且信息明确。\n\n"
             f"输入：\n{chr(10).join(item_lines)}"
         )
         return [
@@ -386,11 +387,13 @@ class LLMService:
                 continue
             if len(summary) > 120:
                 summary = f"{summary[:120]}..."
+            ai_title = LLMService._sanitize_ai_title(str(row.get("ai_title") or ""))
             results.append(
                 LLMInsightItem(
                     tweet_id=tweet_id,
                     ai_score=score,
                     summary=summary,
+                    ai_title=ai_title,
                 )
             )
 
@@ -398,6 +401,15 @@ class LLMService:
         for item in results:
             dedup[item.tweet_id] = item
         return list(dedup.values())
+
+    @staticmethod
+    def _sanitize_ai_title(value: str) -> str | None:
+        title = " ".join((value or "").replace("\n", " ").split()).strip()
+        if not title:
+            return None
+        if len(title) > 50:
+            title = f"{title[:50]}..."
+        return title
 
     @staticmethod
     def _extract_overall_score(lines: list[str]) -> int | None:

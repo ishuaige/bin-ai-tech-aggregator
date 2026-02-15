@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Integer, String
+from sqlalchemy import Boolean, CheckConstraint, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from db.base import Base
@@ -9,6 +9,14 @@ from db.base import Base
 class MonitorSource(Base):
     # __tablename__: 指定数据库表名 (类似 Java @Table(name="monitor_sources"))
     __tablename__ = "monitor_sources"
+    __table_args__ = (
+        CheckConstraint(
+            "type in ('author', 'keyword')",
+            name="ck_monitor_sources_type",
+        ),
+        Index("idx_monitor_sources_type", "type"),
+        Index("idx_monitor_sources_is_active", "is_active"),
+    )
 
     # Mapped[int]: Python 的类型提示，表示这个字段映射为 Python 的 int 类型
     # mapped_column(...): 定义列的详细属性 (类似 Java @Column)

@@ -6,6 +6,7 @@ from .monitor_source import MonitorSource
 from .push_channel import PushChannel
 from .push_log import PushLog
 from .push_log_item import PushLogItem
+from .source_channel_binding import SourceChannelBinding
 
 __all__ = [
     "SourceType",
@@ -18,4 +19,5 @@ __all__ = [
     "PushChannel",
     "PushLog",
     "PushLogItem",
+    "SourceChannelBinding",
 ]

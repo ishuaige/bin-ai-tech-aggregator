@@ -97,94 +97,94 @@
 
 ## Phase 4: API 接口
 
-- [ ] 4.1 设计统一 API 响应结构与错误码规范
+- [x] 4.1 设计统一 API 响应结构与错误码规范
   验收标准：成功/失败响应格式一致，前端可基于 code/message/data 统一处理。
 
-- [ ] 4.2 实现监控源新增接口 `POST /api/sources`
+- [x] 4.2 实现监控源新增接口 `POST /api/sources`
   验收标准：可创建 author/keyword 源；参数非法时返回明确校验错误。
 
-- [ ] 4.3 实现监控源列表接口 `GET /api/sources`
+- [x] 4.3 实现监控源列表接口 `GET /api/sources`
   验收标准：支持分页与基础筛选（type/is_active）。
 
-- [ ] 4.4 实现监控源更新接口 `PUT /api/sources/{id}`
+- [x] 4.4 实现监控源更新接口 `PUT /api/sources/{id}`
   验收标准：可更新 value/remark/is_active；不存在 id 返回 404。
 
-- [ ] 4.5 实现监控源删除接口 `DELETE /api/sources/{id}`
+- [x] 4.5 实现监控源删除接口 `DELETE /api/sources/{id}`
   验收标准：删除后列表不可见；有关联历史日志时策略明确（软删或限制删）。
 
-- [ ] 4.6 实现推送渠道新增接口 `POST /api/channels`
+- [x] 4.6 实现推送渠道新增接口 `POST /api/channels`
   验收标准：可创建 channel；`webhook_url` 非法时被拒绝。
 
-- [ ] 4.7 实现推送渠道列表接口 `GET /api/channels`
+- [x] 4.7 实现推送渠道列表接口 `GET /api/channels`
   验收标准：支持分页与启停筛选；返回字段满足配置页面展示。
 
-- [ ] 4.8 实现推送渠道更新接口 `PUT /api/channels/{id}`
+- [x] 4.8 实现推送渠道更新接口 `PUT /api/channels/{id}`
   验收标准：可更新 name/platform/webhook_url/is_active；无效 id 返回 404。
 
-- [ ] 4.9 实现推送渠道删除接口 `DELETE /api/channels/{id}`
+- [x] 4.9 实现推送渠道删除接口 `DELETE /api/channels/{id}`
   验收标准：删除逻辑可重复调用（幂等行为明确），返回码符合规范。
 
-- [ ] 4.10 实现执行日志列表接口 `GET /api/logs`
+- [x] 4.10 实现执行日志列表接口 `GET /api/logs`
   验收标准：支持按日期、关键字、状态筛选，并提供分页总数。
 
-- [ ] 4.11 实现执行日志详情接口 `GET /api/logs/{id}`
+- [x] 4.11 实现执行日志详情接口 `GET /api/logs/{id}`
   验收标准：返回 `raw_content` 与 `ai_summary`，便于前端历史墙详情查看。
 
-- [ ] 4.12 实现手动触发接口 `POST /api/jobs/run-now`
+- [x] 4.12 实现手动触发接口 `POST /api/jobs/run-now`
   验收标准：触发后立即返回受理结果；后台任务实际开始执行并产生日志。
 
-- [ ] 4.13 实现仪表盘统计接口 `GET /api/dashboard/overview`
+- [x] 4.13 实现仪表盘统计接口 `GET /api/dashboard/overview`
   验收标准：返回今日抓取量、最近执行状态、基础消耗估算字段。
 
-- [ ] 4.14 增加健康检查接口 `GET /health` 与 `GET /ready`
+- [x] 4.14 增加健康检查接口 `GET /health` 与 `GET /ready`
   验收标准：`health` 表示进程存活；`ready` 能验证数据库可用性。
 
-- [ ] 4.15 完善 Swagger 文档、示例请求与错误响应示例
+- [x] 4.15 完善 Swagger 文档、示例请求与错误响应示例
   验收标准：打开 `/docs` 可直接调试所有核心接口，字段说明完整。
 
-- [ ] 4.16 编写 API 集成测试（含数据库隔离）
+- [x] 4.16 编写 API 集成测试（含数据库隔离）
   验收标准：关键 CRUD + run-now + logs 查询均自动化通过。
 
 ## Phase 5: 前端页面
 
-- [ ] 5.1 初始化前端项目结构与基础依赖（Vue3 + Vite + Element Plus + Vue Router + Axios + `markdown-it`/`marked`）
+- [x] 5.1 初始化前端项目结构与基础依赖（Vue3 + Vite + Element Plus + Vue Router + Axios + `markdown-it`/`marked`）
   验收标准：`frontend` 可启动，路由可切换，基础布局正常渲染。
 
-- [ ] 5.2 建立 API 请求层（Axios 实例、拦截器、错误处理）
+- [x] 5.2 建立 API 请求层（Axios 实例、拦截器、错误处理）
   验收标准：统一处理 loading、错误提示与后端响应结构。
 
-- [ ] 5.3 实现全局布局（侧边导航 + 顶栏 + 内容区）
+- [x] 5.3 实现全局布局（侧边导航 + 顶栏 + 内容区）
   验收标准：包含 Dashboard、Settings、History 三个入口并可访问。
 
-- [ ] 5.4 实现 Dashboard 页面：今日抓取量/最近执行状态/API 消耗估算卡片
+- [x] 5.4 实现 Dashboard 页面：今日抓取量/最近执行状态/API 消耗估算卡片
   验收标准：页面加载后正确展示 `overview` 接口数据，空态可用。
 
-- [ ] 5.5 实现 Dashboard “立即执行”按钮与状态反馈
+- [x] 5.5 实现 Dashboard “立即执行”按钮与状态反馈
   验收标准：点击后调用 run-now 接口；成功/失败均有可见反馈。
 
-- [ ] 5.6 实现 Settings 页面：监控源列表与筛选
+- [x] 5.6 实现 Settings 页面：监控源列表与筛选
   验收标准：支持分页、按类型与启停状态筛选。
 
-- [ ] 5.7 实现 Settings 页面：监控源新增/编辑弹窗表单
+- [x] 5.7 实现 Settings 页面：监控源新增/编辑弹窗表单
   验收标准：表单校验覆盖必填与格式；提交后列表自动刷新。
 
-- [ ] 5.8 实现 Settings 页面：监控源启停开关与删除操作
+- [x] 5.8 实现 Settings 页面：监控源启停开关与删除操作
   验收标准：切换状态实时生效；删除需二次确认并正确更新 UI。
 
-- [ ] 5.9 实现 Settings 页面：推送渠道列表与筛选
+- [x] 5.9 实现 Settings 页面：推送渠道列表与筛选
   验收标准：展示 name/platform/webhook/is_active，交互与监控源一致。
 
-- [ ] 5.10 实现 Settings 页面：推送渠道新增/编辑/删除
+- [x] 5.10 实现 Settings 页面：推送渠道新增/编辑/删除
   验收标准：Webhook URL 校验有效；提交成功后即时反映到列表。
 
-- [ ] 5.11 实现 History 页面：日志列表分页与筛选（日期/关键字/状态）
+- [x] 5.11 实现 History 页面：日志列表分页与筛选（日期/关键字/状态）
   验收标准：查询条件可组合；翻页与筛选联动正确。
 
-- [ ] 5.12 实现 History 页面：日志详情抽屉（原文 + AI 摘要）
+- [x] 5.12 实现 History 页面：日志详情抽屉（原文 + AI 摘要）
   验收标准：点击记录可查看完整详情；Markdown 语法（如 `**加粗**`、`- 列表`）能被解析为正确的 HTML 标签并渲染。
 
-- [ ] 5.13 实现通用空态、加载态、错误态组件
+- [x] 5.13 实现通用空态、加载态、错误态组件
   验收标准：各页面在无数据、请求中、请求失败时均有统一表现。
 
-- [ ] 5.14 前端联调与端到端验收
+- [x] 5.14 前端联调与端到端验收
   验收标准：从新增 source/channel 到手动执行再到历史查看，全链路可操作且结果正确。

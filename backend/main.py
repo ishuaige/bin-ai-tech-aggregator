@@ -3,9 +3,11 @@ import logging
 import uuid
 from typing import AsyncIterator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
+from starlette.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
@@ -16,6 +18,16 @@ from core.request_context import request_id_ctx_var
 from db.init_db import init_db
 from db.session import SessionLocal
 from models import PushChannel
+from routers import (
+    channels_router,
+    contents_router,
+    dashboard_router,
+    jobs_router,
+    logs_router,
+    source_channel_bindings_router,
+    sources_router,
+    system_router,
+)
 from services import NotifyService, PipelineService, SchedulerService
 
 logger = logging.getLogger(__name__)
@@ -93,14 +105,39 @@ app = FastAPI(lifespan=lifespan)
 app.add_middleware(RequestIdMiddleware)
 
 
-# 定义一个 GET 请求接口
-# 访问路径: http://localhost:8000/health
-# async def: 定义异步函数，FastAPI 推荐用法，性能更高
-# -> dict[str, str]: 类型提示，告诉开发者和 IDE 返回值是一个 Map<String, String>
-@app.get("/health")
-async def health() -> dict[str, str]:
-    # Python 字典字面量，等同于 Java 的 Map.of("status", "ok")
-    return {"status": "ok"}
+app.include_router(system_router)
+app.include_router(sources_router)
+app.include_router(channels_router)
+app.include_router(source_channel_bindings_router)
+app.include_router(contents_router)
+app.include_router(logs_router)
+app.include_router(jobs_router)
+app.include_router(dashboard_router)
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(_: Request, exc: HTTPException) -> JSONResponse:
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"code": exc.status_code, "message": str(exc.detail), "data": None},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(_: Request, exc: RequestValidationError) -> JSONResponse:
+    return JSONResponse(
+        status_code=422,
+        content={"code": 422, "message": "validation_error", "data": exc.errors()},
+    )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(_: Request, exc: Exception) -> JSONResponse:
+    logger.exception("unhandled_exception", exc_info=exc)
+    return JSONResponse(
+        status_code=500,
+        content={"code": 500, "message": "internal_server_error", "data": None},
+    )
 
 
 @app.post("/internal/jobs/run-now")

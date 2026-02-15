@@ -45,11 +45,15 @@ def test_validate_summary_extracts_insights_and_scores() -> None:
 
 def test_parse_batch_item_output_success() -> None:
     service = LLMService()
-    text = '[{"tweet_id":"1","ai_score":88,"summary":"这条资讯强调了异步队列在高并发任务调度中的价值。"}]'
+    text = (
+        '[{"tweet_id":"1","ai_score":88,"summary":"这条资讯强调了异步队列在高并发任务调度中的价值。",'
+        '"ai_title":"异步队列在高并发下的调度价值"}]'
+    )
     insights = service._parse_batch_item_output(text, allowed_ids={"1", "2"})
     assert len(insights) == 1
     assert insights[0].tweet_id == "1"
     assert insights[0].ai_score == 88
+    assert insights[0].ai_title == "异步队列在高并发下的调度价值"
 
 
 @pytest.mark.asyncio

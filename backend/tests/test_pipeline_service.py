@@ -59,7 +59,7 @@ async def test_run_source_success(monkeypatch: pytest.MonkeyPatch) -> None:
         notify_service=_FakeNotify(),
     )
 
-    async def _no_channels(session):
+    async def _no_channels(session, source_id):
         return []
 
     class _FakePushLog:
@@ -101,7 +101,7 @@ async def test_run_source_failed_when_type_invalid(monkeypatch: pytest.MonkeyPat
         notify_service=_FakeNotify(),
     )
 
-    async def _no_channels(session):
+    async def _no_channels(session, source_id):
         return []
 
     class _FakePushLog:
@@ -145,3 +145,34 @@ def test_fallback_score_and_summary_when_llm_missing() -> None:
     assert 1 <= score <= 10
     assert isinstance(summary, str)
     assert len(summary) > 0
+
+
+def test_apply_ai_generated_title_if_missing() -> None:
+    class _Content:
+        title = None
+
+    content = _Content()
+    insight = LLMInsightItem(
+        tweet_id="x2",
+        ai_score=86,
+        summary="这条资讯指出新模型在函数调用稳定性上有明显改进，适合生产环境。",
+        ai_title="函数调用稳定性明显改进",
+    )
+    PipelineService._apply_ai_generated_title_if_missing(content_item=content, insight=insight)  # type: ignore[arg-type]
+    assert content.title == "[AI生成] 函数调用稳定性明显改进"
+
+
+def test_apply_ai_generated_title_from_summary_when_title_missing() -> None:
+    class _Content:
+        title = None
+
+    content = _Content()
+    insight = LLMInsightItem(
+        tweet_id="x3",
+        ai_score=73,
+        summary="新版本优化了推理吞吐并降低了延迟。适合高并发场景。",
+        ai_title=None,
+    )
+    PipelineService._apply_ai_generated_title_if_missing(content_item=content, insight=insight)  # type: ignore[arg-type]
+    assert content.title is not None
+    assert content.title.startswith("[AI生成] ")

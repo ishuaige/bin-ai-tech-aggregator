@@ -1,0 +1,228 @@
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg-main: #0b1324;
+  --bg-surface: #111f36;
+  --bg-surface-soft: #152847;
+  --bg-card: #10213f;
+  --text-main: #ecf4ff;
+  --text-sub: #b5c6de;
+  --line: #294367;
+  --primary: #22c55e;
+  --primary-soft: #1f9f50;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --radius: 16px;
+  --shadow: 0 14px 40px rgba(5, 10, 22, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  font-family: 'Source Sans 3', sans-serif;
+  background:
+    radial-gradient(circle at 85% 12%, rgba(34, 197, 94, 0.16), transparent 34%),
+    radial-gradient(circle at 12% 18%, rgba(72, 173, 255, 0.2), transparent 32%),
+    linear-gradient(160deg, #081121 0%, #0b1324 42%, #0e1930 100%);
+  color: var(--text-main);
+}
+
+.el-popper,
+.el-select-dropdown,
+.el-picker-panel,
+.el-picker__popper,
+.el-dropdown__popper,
+.el-tooltip__popper,
+.el-popover.el-popper {
+  background: #0f213f !important;
+  border-color: var(--line) !important;
+  color: var(--text-main) !important;
+}
+
+.el-select-dropdown__item,
+.el-dropdown-menu__item,
+.el-picker-panel__shortcut,
+.el-date-table td .el-date-table-cell__text,
+.el-month-table td .cell,
+.el-year-table td .cell {
+  color: var(--text-main) !important;
+}
+
+.el-select-dropdown__item {
+  background: transparent !important;
+  font-weight: 400 !important;
+}
+
+.el-select-dropdown__item.hover,
+.el-select-dropdown__item:hover,
+.el-select-dropdown__item.is-hovering,
+.el-dropdown-menu__item:hover {
+  background: transparent !important;
+  color: #dfffea !important;
+  font-weight: 400 !important;
+}
+
+.el-select-dropdown__item.selected,
+.el-select-dropdown__item.is-selected {
+  color: #5df59a !important;
+  background: transparent !important;
+  font-weight: 600 !important;
+}
+
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select__wrapper {
+  background: rgba(13, 30, 57, 0.86) !important;
+  border-color: var(--line) !important;
+  color: var(--text-main) !important;
+}
+
+.el-input__inner,
+.el-textarea__inner {
+  color: var(--text-main) !important;
+}
+
+.el-input__inner::placeholder,
+.el-textarea__inner::placeholder {
+  color: #90a9cb !important;
+}
+
+.el-select__placeholder,
+.el-input__count,
+.el-input__count-inner,
+.el-textarea .el-input__count,
+.el-textarea .el-input__count-inner {
+  color: #9bb1ce !important;
+}
+
+.el-input__count-inner,
+.el-textarea .el-input__count-inner {
+  background: transparent !important;
+}
+
+.el-tabs--border-card,
+.el-tabs--border-card > .el-tabs__content,
+.el-tabs--border-card > .el-tabs__header {
+  background: rgba(11, 27, 52, 0.86) !important;
+  border-color: var(--line) !important;
+}
+
+.el-table,
+.el-table__inner-wrapper,
+.el-table th.el-table__cell,
+.el-table tr,
+.el-table td.el-table__cell {
+  background: rgba(14, 31, 58, 0.78) !important;
+  color: var(--text-main) !important;
+  border-color: rgba(54, 82, 123, 0.42) !important;
+}
+
+.el-pagination {
+  color: var(--text-sub) !important;
+}
+
+.el-pagination button,
+.el-pagination .el-pager li {
+  background: rgba(13, 30, 57, 0.86) !important;
+  color: var(--text-main) !important;
+  border-color: var(--line) !important;
+}
+
+.el-pagination .el-pager li.is-active {
+  color: #5df59a !important;
+  border-color: #2f8050 !important;
+}
+
+.el-dialog,
+.el-drawer {
+  background: #111f36 !important;
+  border-color: var(--line) !important;
+}
+
+.el-dialog__title,
+.el-drawer__title,
+.el-form-item__label,
+.el-radio__label,
+.el-checkbox__label {
+  color: var(--text-main) !important;
+}
+
+.el-empty__description p,
+.el-descriptions__label,
+.el-descriptions__content {
+  color: var(--text-sub) !important;
+}
+
+.el-button {
+  transition: all 220ms ease;
+}
+
+.el-tag {
+  border-color: transparent !important;
+  color: #e9f3ff !important;
+  background: rgba(66, 94, 136, 0.36) !important;
+}
+
+.el-tag.el-tag--success {
+  color: #dbffe9 !important;
+  background: rgba(34, 197, 94, 0.2) !important;
+}
+
+.el-tag.el-tag--danger {
+  color: #ffe3e3 !important;
+  background: rgba(239, 68, 68, 0.2) !important;
+}
+
+.el-tag.el-tag--warning {
+  color: #fff2d7 !important;
+  background: rgba(245, 158, 11, 0.24) !important;
+}
+
+.el-tag.el-tag--info {
+  color: #deebff !important;
+  background: rgba(71, 120, 190, 0.28) !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Lexend', sans-serif;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

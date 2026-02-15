@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from dataclasses import dataclass, field
 from urllib.parse import urlparse
@@ -93,6 +94,7 @@ class NotifyService:
         results: list[NotifyResult] = []
 
         async with httpx.AsyncClient(timeout=timeout) as client:
+            tasks = []
             for channel in channels:
                 # 飞书渠道只推送前10条（默认 digest_items 已按热度降序）。
                 channel_items = digest_items or []
@@ -106,8 +108,10 @@ class NotifyService:
                     digest_items=channel_items,
                 )
                 payload = self._build_payload(channel=channel, markdown=markdown, digest_items=channel_items)
-                result = await self._send_one(client=client, channel=channel, payload=payload)
-                results.append(result)
+                tasks.append(self._send_one(client=client, channel=channel, payload=payload))
+
+            if tasks:
+                results = list(await asyncio.gather(*tasks))
 
         return results
 
